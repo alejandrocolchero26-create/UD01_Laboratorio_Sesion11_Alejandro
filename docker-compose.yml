@@ -1,0 +1,53 @@
+networks:
+  bigdata-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
+
+services:
+  hadoop:
+    image: apache/hadoop:3.4.0
+    container_name: hadoop-lab
+    hostname: hadoop-lab
+    ports:
+      - "9870:9870"   # NameNode Web UI
+      - "8088:8088"   # YARN ResourceManager Web UI
+    entrypoint: ["/bin/bash", "-c", "if [ \"$1\" = \"standalone\" ]; then tail -f /dev/null; else exec \"$@\"; fi", "--"]
+    command: ["standalone"]
+    volumes:
+      - ./datos:/workspace
+    networks:
+      - bigdata-net
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql_server
+    hostname: mysql_server
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: hadoop
+      MYSQL_DATABASE: testdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - bigdata-net
+
+  sqoop:
+    build: ./sqoop
+    image: sqoop-bigdata:1.4.7
+    container_name: sqoop_client
+    hostname: sqoop
+    depends_on:
+      - mysql
+      - hadoop
+    networks:
+      - bigdata-net
+    volumes:
+      - ./hadoop-config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./hadoop-config/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+    stdin_open: true
+    tty: true
+    command: ["bash", "-c", "sleep infinity"]
