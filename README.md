@@ -63,6 +63,11 @@ La interacción con el clúster se realizó mediante la CLI de HDFS siguiendo es
 
 No se pierde ni se corrompe debido a su mecanismo de replicación de bloques y su arquitectura que es tolerante a fallos. Cuando subimos un archivo a HDFS este lo divide en fragmentos de hasta 128 MB o incluso 256MB, cada fragmento se replica 3 veces en diferentes DataNodes, esto permite que si un DataNodese apaga o falla, tenemos otras dos copias mas que siguen estando operativas en otros servidores del clúster.
 
+Además, cuando el NameNode detecta que un DataNode ha dejado de responder, actualiza de forma automática el mapa del clúster e inicia un proceso de re-replicación en segundo plano. Esto significa que los bloques que albergaba el nodo caído se vuelven a duplicar en otros nodos sanos hasta restablecer el factor de replicación original, asegurando que la tolerancia a fallos se mantenga robusta de manera autónoma. También la orquestación central a cargo del NameNode monitoriza constantemente la salud del clúster mediante señales periódicas (heartbeats). 
+
+Cuando se corrompen los datos también, HDFS previene este problema mediante verificaciones continuas de integridad usando sumas de verificación, a esto se le llama (checksums).
+Si durante la lectura o las comprobaciones rutinarias se detecta que un bloque está corrupto, HDFS no utiliza esa copia dañada; en su lugar, descarta el bloque defectuoso y lo repara automáticamente clonando una réplica sana desde otro nodo del clúster.
+
 ---
 
 ## Sección 4: Evidencias Gráficas
